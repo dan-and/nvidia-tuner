@@ -96,7 +96,7 @@ pub fn set_fan_speed(
     speed: u32
 ) -> Result<(), String> {
     let num_fans = get_num_fans(&nvml_lib, &device_handle).map_err(|e| format!("Failed to get the number of fans: {}", e))?;
-    
+
     let device_handle = device_handle.lock().unwrap();
     let fan_speed_state = fan_speed_state.lock().unwrap();
     if fan_speed_state.default {
@@ -118,7 +118,7 @@ fn set_default_fan_speed(
     fan_speed_state: &Arc<Mutex<FanSpeedState>>
 ) -> Result<(), String> {
     let num_fans = get_num_fans(&nvml_lib, device_handle).map_err(|e| format!("Failed to get the number of fans: {}", e))?;
-    
+
     let device_handle = device_handle.lock().unwrap();
     let mut fan_speed_state = fan_speed_state.lock().unwrap();
     fan_speed_state.default = true;

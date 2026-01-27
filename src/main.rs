@@ -23,7 +23,7 @@ fn main() {
     let nvml = Nvml::init().map_err(|e| format!("Failed to initialize NVML: {}", e)).unwrap();
     check_driver_version(&nvml).unwrap();
 
-    let nvml_lib = Arc::new(unsafe { NvmlLib::new("libnvidia-ml.so").map_err(|e| format!("Failed to load NVML library: {}", e)).unwrap() });
+    let nvml_lib = Arc::new(unsafe { NvmlLib::new("libnvidia-ml.so.1") }.map_err(|e| format!("Failed to load NVML library: {}", e)).unwrap());
 
     let device = nvml.device_by_index(cli.index).map_err(|e| format!("Failed to get GPU: {}", e)).unwrap();
     let device_handle: Arc<Mutex<SafeNvmlDevice>> = Arc::new(Mutex::new(SafeNvmlDevice { handle: unsafe { device.handle() } }));
@@ -50,17 +50,17 @@ fn main() {
     if let Some(pairs) = cli.pairs {
         let temp_fan_pairs: Vec<utils::TempFanPair> = parse_temperature_fan_speed_pairs(&pairs).map_err(|e| format!("Failed to parse temperature and fan speed pairs: {}", e)).unwrap();
         check_temperature_fan_speed_pairs(&temp_fan_pairs).unwrap();
-    
+
         let fan_speed_state = Arc::new(Mutex::new(FanSpeedState { default: false }));
         setup_cleanup(Arc::clone(&nvml_lib), Arc::clone(&device_handle), Arc::clone(&fan_speed_state))
         .map_err(|e| format!("Failed to setup cleanup: {}", e)).unwrap();
-    
+
         let mut hyst_upper_temp: u32 = 0;
         let mut last_fan_speed: i64 = -1;
         let first_temp = temp_fan_pairs[0].temperature;
         loop {
             let mut temperature = get_temperature(&nvml_lib, &device_handle).map_err(|e| format!("Failed to get temperature: {}", e)).unwrap();
-    
+
             // Apply hysteresis to temperature
             if cli.temperature_hysteresis > 0 {
                 if (temperature < hyst_upper_temp) && ((temperature + cli.temperature_hysteresis) >= hyst_upper_temp) {
@@ -72,17 +72,17 @@ fn main() {
                     hyst_upper_temp = temperature;
                 }
             }
-    
+
             let fan_speed = interpolate_fan_speed(&temp_fan_pairs, temperature);
-    
+
             // Set fan speed if it has changed
             if last_fan_speed != i64::from(fan_speed) {
                 set_fan_speed(&nvml_lib, &device_handle, &fan_speed_state, fan_speed)
                 .map_err(|e| format!("Failed to set fan speed: {}", e)).unwrap();
-    
+
                 last_fan_speed = i64::from(fan_speed);
             }
-    
+
             thread::sleep(Duration::from_secs(cli.fan_speed_update_period));
         }
     }

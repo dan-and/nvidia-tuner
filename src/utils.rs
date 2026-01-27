@@ -24,9 +24,9 @@ fn parse_temperature_fan_speed_parts(
         return Err(format!("Invalid temperature and fan speed pair format"));
     }
 
-    let temperature = parts[0].trim().parse::<u32>().map_err(|e| 
+    let temperature = parts[0].trim().parse::<u32>().map_err(|e|
         format!("Failed to parse temperature from '{}': {}", parts[0], e))?;
-    let fan_speed = parts[1].trim().parse::<u32>().map_err(|e| 
+    let fan_speed = parts[1].trim().parse::<u32>().map_err(|e|
         format!("Failed to parse fan speed from '{}': {}", parts[1], e))?;
 
     if temperature > MAX_TEMPERATURE {
@@ -98,7 +98,7 @@ pub fn interpolate_fan_speed(
                     (upper.temperature as f32 - lower.temperature as f32)).round() as u32;
         }
     }
-    
+
     // This point should never be reached
     return MAX_FAN_SPEED;
 }
